@@ -192,7 +192,6 @@ export default {
       this.orbit.x = -Math.cos(degreesToRadians(this.orbit.y))
       this.moonPosition.y = this.moonStartingPoint.y
       this.moonPosition.x = mapRange(this.orbit.x, -1, 1, this.moonStartingPoint.x, this.skyWidth - (this.moonDiameter / 2))
-      console.log(this.orbit.x)
     }
   },
   beforeDestroy () {
