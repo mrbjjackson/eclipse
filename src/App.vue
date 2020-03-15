@@ -2,12 +2,13 @@
   <div id="app">
     <div class="sky" id="app" ref="sky" :style="skyStyles">
       <div class="sun planet" :style="[sunStyles]"></div>
-      <div class="moon planet" :style="[moonStyles]" @mousedown="moonPickUp"></div>
+      <div class="moon planet" ref="moon" :style="[moonStyles]" @mousedown="moonPickUp" @touchstart="moonPickUpTouch"></div>
       <ul>
         <li>Distances X: {{ distances.x }}</li>
         <li>Distances Y: {{ distances.y }}</li>
         <li>Distances Hyp: {{ distances.hyp }}</li>
         <li>Angle: {{ distances.angle }}</li>
+        <li>Touched: {{ touched }}</li>
       </ul>
     </div>
   </div>
@@ -36,9 +37,11 @@ export default {
   data: function () {
     const self = this
     return {
+      touched: 'not touched',
       show: false,
       skyHeight: 0,
       skyWidth: 0,
+      transition: true,
       moonPosition: {
         x: 0,
         y: 0
@@ -89,7 +92,7 @@ export default {
     }
   },
   computed: {
-    sunDiameter () { return this.skyHeight / 3.6 },
+    sunDiameter () { return this.skyWidth / 3.6 },
     moonDiameter () { return this.sunDiameter - 2 },
     moonStartingPoint () {
       return {
@@ -106,14 +109,14 @@ export default {
     skyBG () {
       return {
         pointA: {
-          r: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 220, 228),
-          g: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 244, 170),
-          b: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 248, 116)
+          r: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 220, 228),
+          g: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 244, 170),
+          b: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 248, 116)
         },
         pointB: {
-          r: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 160, 20),
-          g: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 230, 3),
-          b: mapRange(this.distances.hyp, this.skyHeight / 2, 0, 239, 3)
+          r: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 160, 20),
+          g: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 230, 3),
+          b: mapRange(this.distances.hyp, this.skyWidth / 2, 0, 239, 3)
         }
       }
     },
@@ -143,8 +146,8 @@ export default {
       }
     },
     moonStyles () {
-      const blur = mapRange(this.distances.hyp, this.skyHeight / 2, 0, 10, 20)
-      const y = mapRange(this.distances.hyp, this.skyHeight / 2, 0, -8, 0)
+      const blur = mapRange(this.distances.hyp, this.skyWidth / 2, 0, 10, this.sunDiameter / 8)
+      const y = mapRange(this.distances.hyp, this.skyWidth / 4, 0, -this.sunDiameter / 40, 0)
       const alpha = mapRange(this.distances.hyp, this.skyHeight / 2, 0, 0.6, 1)
       return {
         backgroundColor: `rgb(${this.skyBG.pointB.r}, ${this.skyBG.pointB.g}, ${this.skyBG.pointB.b})`,
@@ -156,13 +159,14 @@ export default {
         marginTop: `-${this.sunDiameter / 2}px`,
         marginLeft: `-${this.sunDiameter / 2}px`,
         transform: `rotate(${this.distances.angle}deg)`,
-        transition: 'all 0.5s',
-        cursor: 'pointer'
+        transition: this.transition ? 'all 0.5s' : '',
+        cursor: this.transition ? 'grab' : 'grabbing'
       }
     },
     skyStyles () {
+      const gradientRadius = mapRange(this.distances.hyp, 0, this.skyHeight, 60, 100)
       return {
-        background: `radial-gradient(50% 50% at 50% 50%, rgb(${this.skyBG.pointA.r}, ${this.skyBG.pointA.g}, ${this.skyBG.pointA.b}) 0%, rgb(${this.skyBG.pointB.r}, ${this.skyBG.pointB.g}, ${this.skyBG.pointB.b})  100%), #FFFFFF`
+        background: `radial-gradient(50% 50% at 50% 50%, rgb(${this.skyBG.pointA.r}, ${this.skyBG.pointA.g}, ${this.skyBG.pointA.b}) 0%, rgb(${this.skyBG.pointB.r}, ${this.skyBG.pointB.g}, ${this.skyBG.pointB.b})  ${gradientRadius}%), #FFFFFF`
       }
     }
   },
@@ -176,16 +180,44 @@ export default {
     moonPickUp () {
       window.addEventListener('mousemove', this.moonDrag)
       window.addEventListener('mouseup', this.moonDrop)
+
+      this.orbit.timer.stop()
+
+      this.transition = false
+    },
+    moonPickUpTouch () {
+      this.touched = 'touched'
+      this.$refs.moon.addEventListener('touchmove', this.moonDragTouch, false)
+      window.addEventListener('touchend', this.moonDropTouch, false)
+
+      this.transition = false
+
       this.orbit.timer.stop()
     },
     moonDrop () {
+      this.transition = true
+
       window.removeEventListener('mousemove', this.moonDrag)
       window.removeEventListener('mouseup', this.moonDrop)
+
+      this.orbit.timer.start()
+    },
+    moonDropTouch () {
+      this.transition = true
+      this.touched = 'untouched'
+      this.$refs.moon.removeEventListener('touchmove', this.moonDragTouch)
+      window.removeEventListener('touchend', this.moonDropTouch)
+
       this.orbit.timer.start()
     },
     moonDrag (e) {
       this.moonPosition.x += e.movementX
       this.moonPosition.y += e.movementY
+    },
+    moonDragTouch (e) {
+      this.moonPosition.x = e.touches[0].pageX
+      this.moonPosition.y = e.touches[0].pageY
+      console.log(e)
     },
     updateOrbit () {
       this.orbit.y++
@@ -210,11 +242,6 @@ ul {
   border-radius: 50%;
   position:absolute;
 }
-
-// .moon {
-//   transition: top 0.2s, left 0.1s;
-//   transition-timing-function: ease-out;
-// }
 
 .sky {
   height: 100vh;
