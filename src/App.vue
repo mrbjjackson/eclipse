@@ -3,13 +3,13 @@
     <div class="sky" id="app" ref="sky" :style="skyStyles">
       <div class="sun planet" :style="[sunStyles]"></div>
       <div class="moon planet" ref="moon" :style="[moonStyles]" @mousedown="moonPickUp" @touchstart="moonPickUpTouch"></div>
-      <ul>
+      <!-- <ul>
         <li>Distances X: {{ distances.x }}</li>
         <li>Distances Y: {{ distances.y }}</li>
         <li>Distances Hyp: {{ distances.hyp }}</li>
         <li>Angle: {{ distances.angle }}</li>
         <li>Touched: {{ touched }}</li>
-      </ul>
+      </ul> -->
     </div>
   </div>
 </template>
