@@ -211,12 +211,22 @@ export default {
       this.orbit.timer.start()
     },
     moonDrag (e) {
-      this.moonPosition.x += e.movementX
-      this.moonPosition.y += e.movementY
+      if (this.moonPosition.x < this.skyWidth) {
+        this.moonPosition.x += e.movementX
+      }
+
+      if (this.moonPosition.y < this.skyHeight) {
+        this.moonPosition.y += e.movementY
+      }
     },
     moonDragTouch (e) {
-      this.moonPosition.x = e.touches[0].pageX
-      this.moonPosition.y = e.touches[0].pageY
+      if (this.moonPosition.x < this.skyWidth - (this.sunDiameter / 2)) {
+        this.moonPosition.x = e.touches[0].pageX
+      }
+
+      if (this.moonPosition.y < this.skyHeight - (this.sunDiameter / 2)) {
+        this.moonPosition.y = e.touches[0].pageY
+      }
     },
     updateOrbit () {
       this.orbit.y++
@@ -245,6 +255,9 @@ ul {
 .sky {
   height: 100vh;
   width: 100vw;
+  max-height:100vh;
+  max-width:100vw;
+  overflow:hidden;
 }
 
 body, html {
