@@ -217,7 +217,6 @@ export default {
     moonDragTouch (e) {
       this.moonPosition.x = e.touches[0].pageX
       this.moonPosition.y = e.touches[0].pageY
-      console.log(e)
     },
     updateOrbit () {
       this.orbit.y++
